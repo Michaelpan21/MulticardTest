@@ -1,12 +1,12 @@
-package ru.muilticard.controller;
+package ru.muilticard.controller.rest;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.muilticard.entity.AtmRepair;
+import ru.muilticard.service.AtmService;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -14,8 +14,11 @@ import java.util.Map;
 @RequestMapping("atm")
 public class AtmController {
 
-    @PostMapping
-    public void saveFile(@RequestBody Map<String, List<List<String>>> fileData) {
+    @Autowired
+    private AtmService atmService;
 
-    };
+    @PostMapping
+    public String saveFile(@RequestBody Map<String, List<List<String>>> fileData) {
+        return String.valueOf(atmService.parseFile(fileData));
+    }
 }

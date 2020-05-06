@@ -1,10 +1,18 @@
 
 var fileKeeper = {};
 
+var api = Vue.resource('/atm');
+
 var app = new Vue({
   el: '#app',
-  template: '<div><input @change="prepare($event.target.files[0])" type="file" accept=".xlsx"/>' +
-              '<button type="submit" @click="send">Загрузить</button></div>',
+  template: '<div>' +
+              '<input @change="prepare($event.target.files[0])" type="file" accept=".xlsx"/>' +
+              '<button type="submit" @click="send">Загрузить</button>' +
+              '<label>Загруженно {{count}}</label>' +
+            '</div>',
+  data: {
+    count: '',
+  },
   methods: {
     prepare: function(file) {
       var reader = new FileReader();
@@ -22,7 +30,11 @@ var app = new Vue({
       reader.readAsArrayBuffer(file);
     },
     send: function() {
-      this.$http.post('/atm', fileKeeper);
-    }
+      api.save(fileKeeper).then(response => {
+          this.count = response.body;
+        }, response => {
+             // error callback
+      });
+    },
   },
 });
