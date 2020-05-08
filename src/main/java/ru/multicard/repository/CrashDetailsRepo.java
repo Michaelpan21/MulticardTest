@@ -1,7 +1,7 @@
-package ru.muilticard.repository;
+package ru.multicard.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import ru.muilticard.entity.CrashDetails;
+import ru.multicard.entity.CrashDetails;
 
 public interface CrashDetailsRepo extends JpaRepository<CrashDetails, Long> {
 

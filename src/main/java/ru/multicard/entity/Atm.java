@@ -1,4 +1,4 @@
-package ru.muilticard.entity;
+package ru.multicard.entity;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
