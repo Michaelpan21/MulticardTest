@@ -9,20 +9,79 @@
 
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.5.1"></script>
-    <script src="https://unpkg.com/canvas-datagrid"></script>
+    <script src="//unpkg.com/element-ui@2.13.1/lib/index.js"></script>
 </head>
 <body>
-    <div class="center">
+    <div class="data-box">
+            <div id="app" class="grid-box">
+                <template>
+                    <el-table
+                            :data="tableData"
+                            height="100%"
+                            width="100%"
+                            :stripe=true
+                            style="width: 100%; font-size: 1vmax; font-family: Century Gothic">
+                        <el-table-column
+                                prop="id"
+                                label="CASE_ID"
+                                :resizable=true>
+                        </el-table-column>
+                        <el-table-column
+                                prop="atmId"
+                                label="ATM_ID">
+                        </el-table-column>
+                        <el-table-column
+                                prop="reason"
+                                label="Причина"
+                                :min-width="200">
+                        </el-table-column>
+                        <el-table-column
+                                prop="begin"
+                                label="Начало"
+                                :min-width="120">
+                        </el-table-column>
+                        <el-table-column
+                                prop="end"
+                                label="Окончание"
+                                :min-width="120">
+                        </el-table-column>
+                        <el-table-column
+                                prop="atmSerialNumber"
+                                label="Серийный №">
+                        </el-table-column>
+                        <el-table-column
+                                prop="bankName"
+                                label="Банк">
+                        </el-table-column>
+                        <el-table-column
+                                prop="channel"
+                                label="Канал связи">
+                        </el-table-column>
+                        <el-table-column
+                                label="Действия"
+                                :min-width="80">
+                            <template slot-scope="scope">
+                                <el-button
+                                        @click.native.prevent="deleteRow(scope.$index, tableData)"
+                                        type="text"
+                                        size="small">
+                                    Удалить
+                                </el-button>
+                                <el-button
+                                        @click.native.prevent="editRow(scope.$index, tableData)"
+                                        type="text"
+                                        size="small">
+                                    Ред.
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </template>
+            </div>
         <div class="btn-bar"><div id="btnBar"></div></div>
-        <div class="center-box">
-            <div class="file-input" id="app"></div>
-        </div>
     </div>
 
-
-<script src="/js/viewer.js"></script>
-
-
+    <script src="/js/viewer.js"></script>
 
 </body>
 </html>
