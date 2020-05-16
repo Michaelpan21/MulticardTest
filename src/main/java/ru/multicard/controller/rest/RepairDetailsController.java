@@ -2,14 +2,14 @@ package ru.multicard.controller.rest;
 
 import javassist.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.multicard.entity.RepairDetails;
+import ru.multicard.entity.User;
 import ru.multicard.service.RepairDetailsService;
-import ru.multicard.service.util.HeaderUtils;
 
 import java.util.List;
-import java.util.Set;
 
 @RestController
 @RequestMapping("atm")
@@ -23,45 +23,45 @@ public class RepairDetailsController {
     }
 
     @GetMapping
-    public List<RepairDetails> getAll(@RequestHeader("Cookie") String cookie) throws NotFoundException {
-        return repairDetailsService.getRepairDetailsByIds(HeaderUtils.extractSession(cookie));
+    public List<RepairDetails> getAll(@AuthenticationPrincipal User user) throws NotFoundException {
+        return repairDetailsService.getRepairDetailsByIds(user.getUsername());
     }
 
     @PostMapping
-    public Integer saveFile(@RequestHeader("Cookie") String cookie, @RequestBody MultipartFile file) {
-        return repairDetailsService.handleFile(HeaderUtils.extractSession(cookie), file);
+    public Integer saveFile(@AuthenticationPrincipal User user, @RequestBody MultipartFile file) {
+        return repairDetailsService.handleFile(user.getUsername(), file);
     }
 
     @DeleteMapping
-    public void deleteFile(@RequestHeader("Cookie") String cookie) throws NotFoundException {
-        repairDetailsService.deleteRepairDetailsByIds(HeaderUtils.extractSession(cookie));
+    public void deleteFile(@AuthenticationPrincipal User user) throws NotFoundException {
+        repairDetailsService.deleteRepairDetailsByIds(user.getUsername());
     }
 
     @PutMapping("/row/edit")
-    public void editRows(@RequestHeader("Cookie") String cookie,
+    public void editRows(@AuthenticationPrincipal User user,
                          @RequestBody List<RepairDetails> repairs) throws NotFoundException {
-        repairDetailsService.saveEditedRows(HeaderUtils.extractSession(cookie), repairs);
+        repairDetailsService.saveEditedRows(user.getUsername(), repairs);
     }
 
     @PostMapping("/row/delete")
-    public void deleteRows(@RequestHeader("Cookie") String cookie,
+    public void deleteRows(@AuthenticationPrincipal User user,
                            @RequestBody List<Long> ids) throws NotFoundException {
-        repairDetailsService.deleteRowsByIds(HeaderUtils.extractSession(cookie), ids);
+        repairDetailsService.deleteRowsByIds(user.getUsername(), ids);
     }
 
     @GetMapping("/top3/reason")
-    public List<RepairDetails> getTop3ByReason(@RequestHeader("Cookie") String cookie) throws NotFoundException {
-        return repairDetailsService.getTop3ByReason(HeaderUtils.extractSession(cookie));
+    public List<RepairDetails> getTop3ByReason(@AuthenticationPrincipal User user) throws NotFoundException {
+        return repairDetailsService.getTop3ByReason(user.getUsername());
     }
 
     @GetMapping("/top3/time")
-    public List<RepairDetails> getTop3ByTime(@RequestHeader("Cookie") String cookie) throws NotFoundException {
-        return repairDetailsService.getTop3ByTime(HeaderUtils.extractSession(cookie));
+    public List<RepairDetails> getTop3ByTime(@AuthenticationPrincipal User user) throws NotFoundException {
+        return repairDetailsService.getTop3ByTime(user.getUsername());
     }
 
     @GetMapping("/repair/repeated")
-    public Set<RepairDetails> getRepeatedRepairs(@RequestHeader("Cookie") String cookie) throws NotFoundException {
-        return repairDetailsService.getRepeatedRepairs(HeaderUtils.extractSession(cookie));
+    public List<RepairDetails> getRepeatedRepairs(@AuthenticationPrincipal User user) throws NotFoundException {
+        return repairDetailsService.getRepeatedRepairs(user.getUsername());
     }
 
 }

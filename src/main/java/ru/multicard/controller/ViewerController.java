@@ -1,13 +1,13 @@
 package ru.multicard.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import ru.multicard.entity.User;
 import ru.multicard.service.RepairDetailsService;
-import ru.multicard.service.util.HeaderUtils;
 
 @Controller
 @RequestMapping("/view")
@@ -21,8 +21,8 @@ public class ViewerController {
     }
 
     @GetMapping
-    public String getViewerPage(Model model, @RequestHeader("Cookie") String cookie) {
-        if (repairDetailsService.checkFileUploaded(HeaderUtils.extractSession(cookie))) {
+    public String getViewerPage(Model model, @AuthenticationPrincipal User user) {
+        if (repairDetailsService.checkFileUploaded(user.getUsername())) {
             return "viewer";
         }
         return "redirect:/";

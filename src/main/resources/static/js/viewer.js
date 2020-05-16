@@ -19,8 +19,8 @@ var grid = new Vue({
     },
     methods: {
       deleteRow: function(index, rows) {
-          rows.splice(index, 1);
           this.deletedRows.add(rows[index].id);
+          rows.splice(index, 1);
       },
       editRow: function(index, rows) {
           editBox.row = Object.assign({}, rows[index]);
@@ -138,7 +138,6 @@ var btnBar = new Vue({
             });
             grid.editedRows.clear();
         }
-        icon.isShown = false;
     },
   },
 });

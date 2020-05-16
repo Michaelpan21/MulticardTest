@@ -3,6 +3,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>Home</title>
+
     <link rel="shortcut icon" href="/img/favicon-32x32.png" type="image/x-icon">
     <link rel="stylesheet" href="/css/main.css" type="text/css">
 
@@ -16,6 +17,12 @@
         <div class="center-box">
             <div class="file-input" id="app"></div>
         </div>
+    </div>
+    <div class="log-out">
+        <form action="/logout" method="post">
+            <input type="hidden" name="_csrf" value="${_csrf.token}"/>
+            <button type="submit">Выход</button>
+        </form>
     </div>
     <script src="/js/main.js"></script>
 </body>

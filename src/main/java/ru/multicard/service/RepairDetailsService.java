@@ -17,7 +17,10 @@ import ru.multicard.service.cache.RepairIds;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,19 +39,22 @@ public class RepairDetailsService {
 
 
     /**
-     * Обрабатывает приходящий файл Excel, сохраняет строки в базу данных, сохраняет айди ремонтов в кэше
+     * Handles Excel file.
      *
-     * @param sessionId куки из запроса
-     * @param file файл Excel
-     * @return Количество сохраненных строк
+     * <p>Uses for parse Excel file, then save data in database.
+     * Also caches ids of repairs to provide operations with parsed file</p>
+     *
+     * @param username username
+     * @param file  Excel file
+     * @return count of saved rows
      */
-    public Integer handleFile(String sessionId, MultipartFile file) {
-        log.info(String.format("Handling file for session: %s", sessionId));
+    public Integer handleFile(String username, MultipartFile file) {
+        log.info(String.format("Handling file for user: %s", username));
         var repairs = parseExcel(file);
         if (!repairs.isEmpty()) {
             var repairsDto = repairDetailsRepo.saveAll(repairs);
             if (!repairsDto.isEmpty()) {
-                cacheIds(sessionId, repairsDto);
+                cacheIds(username, repairsDto);
             }
             return repairsDto.size();
         }
@@ -56,10 +62,13 @@ public class RepairDetailsService {
     }
 
     /**
-     * Парсинг Excel файла
+     * Parses Excel file from {@link MultipartFile}.
      *
-     * @param file Excel формата xslx
-     * @return Список объектов CrashDetails
+     * <p>Creates list of {@link RepairDetails} objects from rows.
+     * Uses Apache POI library {@see XSSFWorkbook} for this operation</p>
+     *
+     * @param file Excel file .xslx
+     * @return list of {@link RepairDetails} objects
      */
     private List<RepairDetails> parseExcel(MultipartFile file) {
         var repairsList = new ArrayList<RepairDetails>();
@@ -89,61 +98,71 @@ public class RepairDetailsService {
     }
 
     /**
-     * Проверяется, что строка является не заголовком
-     * @param row Строка
-     * @return true если первая ячейка стобеца содержит число
+     * Check that first column is a number.
+     * Use for skip header row
+     *
+     * @param row row from file
+     * @return true if its not a header row
      */
     private boolean notHeaderRow(Row row) {
         return row.getCell(0).getCellType().equals(CellType.NUMERIC);
     }
 
     /**
-     * Сохранение в кэш айди ремонтов по ключи сессии
+     * Save ids of repairs to cache in {@link RepairIds} object
      *
-     * @param session Сессия пользователя
-     * @throws NotFoundException
+     * @param username username, uses as key in cache map
      */
-    private void cacheIds(String session, List<RepairDetails> crashesList) {
-        log.info(String.format("Cache ids for session: %s", session));
-        var ids = crashesList.stream().map(RepairDetails::getId).collect(Collectors.toList());
-        cacheManager.getCache("ids").put(session, new RepairIds(session, ids));
+    private void cacheIds(String username, List<RepairDetails> repairsList) {
+        log.info(String.format("Cache ids for user: %s", username));
+        var ids = repairsList.stream().map(RepairDetails::getId).collect(Collectors.toList());
+        cacheManager.getCache("ids").put(username, new RepairIds(username, ids));
     }
 
     /**
-     * Получение загруженных в базу данных ремонтов
+     * Gets repairs from database.
      *
-     * @param session Сессия пользователя
-     * @return Список объектов CrashDetails
-     * @throws NotFoundException
+     * <p>Uses username for getting saved ids of parsed file in cache
+     * and finds rows with this ids in database</p>
+     *
+     * @param username username
+     * @return list of {@link RepairDetails} from db
+     * @throws NotFoundException {@link RepairDetailsService#getFromIdsCache}
      */
-    public List<RepairDetails> getRepairDetailsByIds(String session) throws NotFoundException {
-        return repairDetailsRepo.findAllById(getFromIdsCache(session).getIds());
+    public List<RepairDetails> getRepairDetailsByIds(String username) throws NotFoundException {
+        return repairDetailsRepo.findAllById(getFromIdsCache(username).getIds());
     }
 
     /**
-     * Удаление загруженных в базу данных ремонтов
+     * Deletes loaded repairs from database.
      *
-     * @param session Сессия пользователя
-     * @throws NotFoundException
+     * <p>Uses username for getting saved ids of parsed file in cache
+     * and finds rows with this ids in database</p>
+     *
+     * @param username username
+     * @throws NotFoundException {@link RepairDetailsService#getFromIdsCache}
      */
     @Transactional
-    public void deleteRepairDetailsByIds(String session) throws NotFoundException {
-        log.info(String.format("Start deleting all for session: %s", session));
-        var count = repairDetailsRepo.deleteAllByIds(getFromIdsCache(session).getIds());
-        cacheManager.getCache("ids").evictIfPresent(session);
-        log.info(String.format("Deleted %d rows for session: %s", count, session));
+    public void deleteRepairDetailsByIds(String username) throws NotFoundException {
+        log.info(String.format("Start deleting all for user: %s", username));
+        var count = repairDetailsRepo.deleteAllByIds(getFromIdsCache(username).getIds());
+        cacheManager.getCache("ids").evictIfPresent(username);
+        log.info(String.format("Deleted %d rows for user: %s", count, username));
     }
 
     /**
-     * Получения списка айди ремонтов из кеша
+     * Gets {@link RepairIds} with repairs ids by username
      *
-     * @param session Сессия пользователя
-     * @return Объект, содержщий в себе айди ремонтов
-     * @throws NotFoundException
+     * <p>Gets special object from cache by username,
+     * uses for matching database rows with rows parsed from saved file </p>
+     *
+     * @param username username uses as key in cache map
+     * @return Object with cached ids {@link RepairIds}
+     * @throws NotFoundException if saved object wasn't found in cache
      */
-    private RepairIds getFromIdsCache(String session) throws NotFoundException {
-        log.info(String.format("Get cached ids for session: %s", session));
-        var crashesIds = cacheManager.getCache("ids").get(session, RepairIds.class);
+    private RepairIds getFromIdsCache(String username) throws NotFoundException {
+        log.info(String.format("Get cached ids for user: %s", username));
+        var crashesIds = cacheManager.getCache("ids").get(username, RepairIds.class);
         if (Objects.isNull(crashesIds)) {
             throw new NotFoundException("Can not found ids in cache");
         }
@@ -151,15 +170,17 @@ public class RepairDetailsService {
     }
 
     /**
-     * Поиск 3 наиболее часто встречающихся причин неисправности
+     * Finds three the most common reasons of crashes.
      *
-     * @param session Сессия пользователя
-     * @return Список объектов CrashDetails
-     * @throws NotFoundException
+     * <p>Groups rows by reasons, then finds three groups having largest size</p>
+     *
+     * @param username username
+     * @return list of {@link RepairDetails} from db
+     * @throws NotFoundException {@link RepairDetailsService#getFromIdsCache}
      */
-    public List<RepairDetails> getTop3ByReason(String session) throws NotFoundException {
+    public List<RepairDetails> getTop3ByReason(String username) throws NotFoundException {
         var resultList = new ArrayList<RepairDetails>();
-        repairDetailsRepo.findAllByIds(getFromIdsCache(session).getIds())
+        repairDetailsRepo.findAllByIds(getFromIdsCache(username).getIds())
                 .stream().collect(Collectors.groupingBy(RepairDetails::getReason))
                 .values().stream().sorted((a, b) -> Integer.compare(b.size(), a.size())).limit(3)
                 .forEach(resultList::addAll);
@@ -167,28 +188,33 @@ public class RepairDetailsService {
     }
 
     /**
-     * Поиск трех наиболее долгих ремонта
+     * Finds three the longest cases of repairs.
      *
-     * @param session Сессия пользователя
-     * @return Список объектов CrashDetails
-     * @throws NotFoundException
+     * <p>Sorts rows by repairs time desc and gets first three</p>
+     *
+     * @param username username
+     * @return list of {@link RepairDetails} from db
+     * @throws NotFoundException {@link RepairDetailsService#getFromIdsCache}
      */
-    public List<RepairDetails> getTop3ByTime(String session) throws NotFoundException {
-        return repairDetailsRepo.findAllByIds(getFromIdsCache(session).getIds())
+    public List<RepairDetails> getTop3ByTime(String username) throws NotFoundException {
+        return repairDetailsRepo.findAllByIds(getFromIdsCache(username).getIds())
                 .stream().sorted(Comparator.comparing(a -> Duration.between(a.getEnd(), a.getBegin()))).limit(3)
                 .collect(Collectors.toList());
     }
 
     /**
-     * Поиск всех ремонтов у которых причина поломки повторилась в течение 15 дней
+     * Finds all repairs where repair's reason was repeated in 15 days.
      *
-     * @param session Сессия пользователя
-     * @return Список объектов CrashDetails
-     * @throws NotFoundException
+     * <p>Sorts rows by reason, atm's id and begin time of repairing acs,
+     * then compares row with next to detect that time between repairs is less than 15 days</p>
+     *
+     * @param username username
+     * @return list of {@link RepairDetails} from db
+     * @throws NotFoundException {@link RepairDetailsService#getFromIdsCache}
      */
-    public Set<RepairDetails> getRepeatedRepairs(String session) throws NotFoundException {
-        var resultSet = new LinkedHashSet<RepairDetails>();
-        var repairList = repairDetailsRepo.findAllByIds(getFromIdsCache(session).getIds());
+    public List<RepairDetails> getRepeatedRepairs(String username) throws NotFoundException {
+        var resultList = new ArrayList<RepairDetails>();
+        var repairList = repairDetailsRepo.findAllByIds(getFromIdsCache(username).getIds());
         repairList.sort(Comparator.comparing(RepairDetails::getReason).thenComparing(RepairDetails::getAtmId)
                 .thenComparing(RepairDetails::getBegin));
 
@@ -199,31 +225,57 @@ public class RepairDetailsService {
                 if (Objects.equals(repair.getAtmId(), repairNext.getAtmId())
                         && Objects.equals(repair.getReason(), repairNext.getReason())
                         && repair.getEnd().isAfter(repairNext.getBegin().minusDays(15))) {
-                    resultSet.add(repair);
+                    resultList.add(repair);
                 }
             }
         }
-        return resultSet;
+        return resultList;
     }
 
-    public void saveEditedRows(String session, List<RepairDetails> repairs) throws NotFoundException {
-        var ids = getFromIdsCache(session).getIds();
+    /**
+     * Saves edited repairs in database.
+     *
+     * <p>Checks cached ids of parsed file, that user is editing now.
+     * This check prevents editing rows not from current file</p>
+     *
+     * @param username username
+     * @param repairs list of edited repairs for save {@link RepairDetails}
+     * @throws NotFoundException {@link RepairDetailsService#getFromIdsCache}
+     */
+    public void saveEditedRows(String username, List<RepairDetails> repairs) throws NotFoundException {
+        var ids = getFromIdsCache(username).getIds();
         repairs.removeIf(v -> !ids.contains(v.getId()));
         if (!repairs.isEmpty()) {
             repairDetailsRepo.saveAll(repairs);
         }
     }
 
+    /**
+     * Deletes repairs from database
+     *
+     * <p>Checks cached ids of parsed file, that user is editing now.
+     * This check prevents deleting rows not from current file</p>
+     *
+     * @param username username
+     * @param repairIds list of repair's ids for delete
+     * @throws NotFoundException {@link RepairDetailsService#getFromIdsCache}
+     */
     @Transactional
-    public void deleteRowsByIds(String session, List<Long> repairIds) throws NotFoundException {
-        var ids = getFromIdsCache(session).getIds();
+    public void deleteRowsByIds(String username, List<Long> repairIds) throws NotFoundException {
+        var ids = getFromIdsCache(username).getIds();
         repairIds.removeIf(v -> !ids.contains(v));
         if (!repairIds.isEmpty()) {
             repairDetailsRepo.deleteAllByIds(repairIds);
         }
     }
 
-    public boolean checkFileUploaded(String session) {
-        return Objects.nonNull(cacheManager.getCache("ids").get(session, RepairIds.class));
+    /**
+     * Checks that user uploaded file and app can show him overview page.
+     *
+     * @param username username
+     * @return true if file was uploaded
+     */
+    public boolean checkFileUploaded(String username) {
+        return Objects.nonNull(cacheManager.getCache("ids").get(username, RepairIds.class));
     }
 }
