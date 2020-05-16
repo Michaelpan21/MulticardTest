@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Entity
 @Data
 @NoArgsConstructor
-public class CrashDetails {
+public class RepairDetails {
 
     @Id
     @NonNull

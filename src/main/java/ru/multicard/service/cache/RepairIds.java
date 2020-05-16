@@ -8,11 +8,11 @@ import java.util.List;
 
 @Getter
 @Cacheable("ids")
-public final class CrashesIds {
+public final class RepairIds {
     private final String key;
     private final List<Long> ids;
 
-    public CrashesIds(String key, List<Long> ids) {
+    public RepairIds(String key, List<Long> ids) {
         this.key = key;
         this.ids = Collections.unmodifiableList(ids);
     }

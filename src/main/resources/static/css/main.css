@@ -195,7 +195,7 @@ body {
 .rotate {
   animation-name: rotate;
   animation-duration: 1.5s;
-  animation-iteration-count: 20;
+  animation-iteration-count: infinite;
 }
 
 @keyframes rotate {
@@ -251,33 +251,106 @@ body {
   color: white;
   border-radius: 7px;
   box-shadow: 4px 4px 20px rgba(0, 0, 0, 0.1);
+  background: #3498db;
 }
 
 .data-box .btn-bar .btn-div button:nth-child(1){
   width: 15%;
   margin-right: 3%;
-  background: #1abc9c;
 }
 
 .data-box .btn-bar .btn-div button:nth-child(2){
   width: 15%;
   margin-right: 12%;
-  background: #2ecc71;
 }
 
 .data-box .btn-bar .btn-div button:nth-child(3){
   width: 10%;
-  background: #3498db;
 }
 
 .data-box .btn-bar .btn-div button:nth-child(4){
   width: 15%;
   margin-left: 12%;
-  background: #9b59b6;
 }
 
 .data-box .btn-bar .btn-div button:nth-child(5){
   width: 15%;
   margin-left: 3%;
-  background: #34495e;
+}
+
+.data-box .btn-bar .btn-div button:hover{
+  background: none;
+  border: 2px solid #3498db;
+  color: #3498db;
+}
+
+.edit-box{
+  position: fixed;
+  top: 4px;
+  width: 90vw;
+  min-width: 95%;
+  min-height: 20px;
+  height: 6%;
+  background: white;
+  background: #ecf0f1;
+  border-radius: 1%;
+  padding: 0.5% 1% 0.5% 1%;
+}
+
+.edit-box label{
+  font-weight: bold;
+  width: 5%;
+  min-width: 20px;
+}
+
+.edit-box input{
+  outline: none;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  width: 10%;
+  min-width: 50px;
+  height: 100%;
+  margin-left: 1%;
+}
+
+.edit-box input:nth-child(2){
+  width: 7%;
+}
+.edit-box input:nth-child(3){
+  width: 25%;
+  min-width: 100px;
+}
+
+.edit-box button{
+  outline: none;
+  border: none;
+  background: #3498db;
+  border-radius: 4px;
+  width: 5%;
+  min-width: 30px;
+  height: 100%;
+  cursor: pointer;
+  color: white;
+  margin-left: 1%;
+}
+
+.edit-box button:hover{
+  border: 2px solid #3498db;
+  background: none;
+  color: #3498db;
+  font-weight: bold;
+}
+
+.ic {
+  position: absolute;
+  height: 8vmax;
+  width: 7vmax;
+  box-shadow: 4px 4px 20px rgba(0, 0, 0, 0.1);
+  background: white;
+}
+
+.ic img{
+  height: 90%;
 }

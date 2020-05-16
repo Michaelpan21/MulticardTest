@@ -75,6 +75,7 @@ var app = new Vue({
           this.count = response.body;
           if (this.count > 0) {
             btnBar.disable = false;
+            drop.classList.remove('highlight');
             drop.classList.add('highlight');
           }
           else btnBar.disable = true;
@@ -130,18 +131,3 @@ var app = new Vue({
     };
   },
 });
-    /*prepare: function(file) {
-      var reader = new FileReader();
-
-      reader.onload = function (e) {
-        var data = e.target.result;
-        data = new Uint8Array(data);
-        var workbook = XLSX.read(data, {type: 'array'});
-
-        workbook.SheetNames.forEach(function (sheetName) {
-          var roa = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {header: 1});
-          if (roa.length) fileKeeper[sheetName] = roa;
-        });
-      };
-      reader.readAsArrayBuffer(file);
-    },*/
