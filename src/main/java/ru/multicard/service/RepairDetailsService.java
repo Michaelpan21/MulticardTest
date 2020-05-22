@@ -49,7 +49,6 @@ public class RepairDetailsService {
      * @return count of saved rows
      */
     public Integer handleFile(String username, MultipartFile file) {
-        log.info(String.format("Handling file for user: %s", username));
         var repairs = parseExcel(file);
         if (!repairs.isEmpty()) {
             var repairsDto = repairDetailsRepo.saveAll(repairs);
@@ -73,7 +72,6 @@ public class RepairDetailsService {
     private List<RepairDetails> parseExcel(MultipartFile file) {
         var repairsList = new ArrayList<RepairDetails>();
         try (var wb = new XSSFWorkbook(file.getInputStream())) {
-            log.info("Start parsing excel file..");
             wb.forEach(sheet ->
                     sheet.forEach(row -> {
                         if (notHeaderRow(row)) {
@@ -90,7 +88,6 @@ public class RepairDetailsService {
                         }
                     })
             );
-            log.info(String.format("Stop parsing excel file. Rows parsed: %d", repairsList.size()));
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -114,7 +111,6 @@ public class RepairDetailsService {
      * @param username username, uses as key in cache map
      */
     private void cacheIds(String username, List<RepairDetails> repairsList) {
-        log.info(String.format("Cache ids for user: %s", username));
         var ids = repairsList.stream().map(RepairDetails::getId).collect(Collectors.toList());
         cacheManager.getCache("ids").put(username, new RepairIds(username, ids));
     }
@@ -143,11 +139,10 @@ public class RepairDetailsService {
      * @throws NotFoundException {@link RepairDetailsService#getFromIdsCache}
      */
     @Transactional
-    public void deleteRepairDetailsByIds(String username) throws NotFoundException {
-        log.info(String.format("Start deleting all for user: %s", username));
+    public Integer deleteRepairDetailsByIds(String username) throws NotFoundException {
         var count = repairDetailsRepo.deleteAllByIds(getFromIdsCache(username).getIds());
         cacheManager.getCache("ids").evictIfPresent(username);
-        log.info(String.format("Deleted %d rows for user: %s", count, username));
+        return count;
     }
 
     /**
@@ -161,7 +156,6 @@ public class RepairDetailsService {
      * @throws NotFoundException if saved object wasn't found in cache
      */
     private RepairIds getFromIdsCache(String username) throws NotFoundException {
-        log.info(String.format("Get cached ids for user: %s", username));
         var crashesIds = cacheManager.getCache("ids").get(username, RepairIds.class);
         if (Objects.isNull(crashesIds)) {
             throw new NotFoundException("Can not found ids in cache");
